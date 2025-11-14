@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Al Farooq Kidney Center & Ultrasound Clinic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Al Farooq Kidney Center & Ultrasound Clinic</h1>
+            <div class="date-time-display" id="dateTimeDisplay"></div>
+            <div class="header-buttons">
+                <button id="appointmentListBtn" class="btn-list">📋 Appointment List</button>
+                <button id="yesterdayAppointmentBtn" class="btn-list">📅 Yesterday Appointment</button>
+            </div>
+        </header>
+        
+        <!-- Statistics Cards -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                    <h3 id="totalTodayStat">0</h3>
+                    <p>Today's Appointments</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👨‍⚕️</div>
+                <div class="stat-content">
+                    <h3 id="umarTodayStat">0</h3>
+                    <p>Dr Umar Farooq - Today</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👩‍⚕️</div>
+                <div class="stat-content">
+                    <h3 id="samreenTodayStat">0</h3>
+                    <p>Dr Samreen Malik - Today</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-content">
+                    <h3 id="yesterdayStat">0</h3>
+                    <p>Yesterday's Appointments</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <!-- Dr Umar Farooq Section -->
+            <div class="doctor-section">
+                <div class="doctor-header">
+                    <h2>Dr Umar Farooq</h2>
+                </div>
+                <div class="name-input-section">
+                    <label for="umarName">Patient Name:</label>
+                    <input type="text" id="umarName" class="name-input" placeholder="Enter patient name">
+                </div>
+                <div class="appointment-controls">
+                    <button id="generateUmar" class="btn-primary">Generate Appointment</button>
+                    <button id="clearUmar" class="btn-secondary">Clear</button>
+                </div>
+                <div class="appointment-display">
+                    <div class="current-appointment">
+                        <span class="label">Current Appointment No:</span>
+                        <span id="umarAppointment" class="appointment-number">-</span>
+                    </div>
+                    <div class="patient-name-display" id="umarPatientName"></div>
+                </div>
+                <div class="appointment-history">
+                    <h3>Recent Appointments</h3>
+                    <div id="umarHistory" class="history-list"></div>
+                </div>
+            </div>
+
+            <!-- Dr Samreen Malik Section -->
+            <div class="doctor-section">
+                <div class="doctor-header">
+                    <h2>Dr Samreen Malik</h2>
+                </div>
+                <div class="name-input-section">
+                    <label for="samreenName">Patient Name:</label>
+                    <input type="text" id="samreenName" class="name-input" placeholder="Enter patient name">
+                </div>
+                <div class="appointment-controls">
+                    <button id="generateSamreen" class="btn-primary">Generate Appointment</button>
+                    <button id="clearSamreen" class="btn-secondary">Clear</button>
+                </div>
+                <div class="appointment-display">
+                    <div class="current-appointment">
+                        <span class="label">Current Appointment No:</span>
+                        <span id="samreenAppointment" class="appointment-number">-</span>
+                    </div>
+                    <div class="patient-name-display" id="samreenPatientName"></div>
+                </div>
+                <div class="appointment-history">
+                    <h3>Recent Appointments</h3>
+                    <div id="samreenHistory" class="history-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment List Modal -->
+    <div id="appointmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Appointment List</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="doctor-list-section">
+                    <h3>Dr Umar Farooq</h3>
+                    <div id="umarFullList" class="full-appointment-list"></div>
+                </div>
+                <div class="doctor-list-section">
+                    <h3>Dr Samreen Malik</h3>
+                    <div id="samreenFullList" class="full-appointment-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Yesterday Appointment Modal -->
+    <div id="yesterdayModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Yesterday's Appointments</h2>
+                <div class="modal-header-actions">
+                    <button id="patientListBtn" class="btn-patient-list">Patient List</button>
+                    <button id="clearYesterdayList" class="btn-clear-yesterday">Clear List</button>
+                    <span class="close-yesterday-modal">&times;</span>
+                </div>
+            </div>
+            <div class="modal-body" id="yesterdayModalBody">
+                <div class="doctor-list-section">
+                    <h3>Dr Umar Farooq</h3>
+                    <div class="yesterday-input-section">
+                        <label for="umarYesterdayName">Patient Name:</label>
+                        <input type="text" id="umarYesterdayName" class="name-input" placeholder="Enter patient name">
+                        <button id="generateUmarYesterday" class="btn-primary">Generate Appointment</button>
+                    </div>
+                    <div id="umarYesterdayList" class="full-appointment-list"></div>
+                </div>
+                <div class="doctor-list-section">
+                    <h3>Dr Samreen Malik</h3>
+                    <div class="yesterday-input-section">
+                        <label for="samreenYesterdayName">Patient Name:</label>
+                        <input type="text" id="samreenYesterdayName" class="name-input" placeholder="Enter patient name">
+                        <button id="generateSamreenYesterday" class="btn-primary">Generate Appointment</button>
+                    </div>
+                    <div id="samreenYesterdayList" class="full-appointment-list"></div>
+                </div>
+            </div>
+            <div class="modal-body patient-list-view" id="patientListView" style="display: none;">
+                <div class="patient-list-container">
+                    <div class="patient-list-section">
+                        <h3>Dr Umar Farooq - Patients</h3>
+                        <div id="umarPatientList" class="patient-list"></div>
+                    </div>
+                    <div class="patient-list-section">
+                        <h3>Dr Samreen Malik - Patients</h3>
+                        <div id="samreenPatientList" class="patient-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content password-modal-content">
+            <div class="modal-header">
+                <h2>Enter Password to Clear</h2>
+                <span class="close-password-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="password-input-section">
+                    <label for="passwordInput">Password:</label>
+                    <input type="password" id="passwordInput" class="password-input" placeholder="Enter password">
+                    <div id="passwordError" class="password-error"></div>
+                    <div class="password-buttons">
+                        <button id="confirmPassword" class="btn-primary">Confirm</button>
+                        <button id="cancelPassword" class="btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
