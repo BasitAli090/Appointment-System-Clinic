@@ -228,6 +228,8 @@ function updateDisplay(doctor, appointmentNumber, patientName) {
     saveToLocalStorage().then(() => {
         // Update history display after save completes
         updateHistoryDisplay(doctorKey, historyElement);
+        // Immediately refresh from server to get merged data from other devices
+        setTimeout(() => loadFromDatabase(), 500);
     });
 }
 
@@ -327,12 +329,14 @@ window.editAppointment = function(doctorKey, appointmentNumber) {
     const newName = prompt('Edit Patient Name:', appointment.name);
     if (newName !== null && newName.trim() !== '') {
         appointment.name = newName.trim();
-        saveToLocalStorage();
-        updateFullList(doctorKey, document.getElementById(`${doctorKey}FullList`));
-        updateYesterdayList(doctorKey, document.getElementById(`${doctorKey}YesterdayList`));
-        updatePatientList(doctorKey, document.getElementById(`${doctorKey}PatientList`));
-        updateHistoryDisplay(doctorKey, document.getElementById(`${doctorKey}History`));
-        updateStatistics();
+        saveToLocalStorage().then(() => {
+            updateFullList(doctorKey, document.getElementById(`${doctorKey}FullList`));
+            updateYesterdayList(doctorKey, document.getElementById(`${doctorKey}YesterdayList`));
+            updatePatientList(doctorKey, document.getElementById(`${doctorKey}PatientList`));
+            updateHistoryDisplay(doctorKey, document.getElementById(`${doctorKey}History`));
+            updateStatistics();
+            setTimeout(() => loadFromDatabase(), 500);
+        });
     }
 };
 
@@ -356,16 +360,17 @@ window.deleteAppointment = function(doctorKey, appointmentNumber) {
     saveAvailability();
     
     // Save to localStorage
-    saveToLocalStorage();
-    
-    // Update displays
-    updateFullList(doctorKey, document.getElementById(`${doctorKey}FullList`));
-    updateYesterdayList(doctorKey, document.getElementById(`${doctorKey}YesterdayList`));
-    updatePatientList(doctorKey, document.getElementById(`${doctorKey}PatientList`));
-    updateHistoryDisplay(doctorKey, document.getElementById(`${doctorKey}History`));
-    
-    // Update statistics
-    updateStatistics();
+    saveToLocalStorage().then(() => {
+        // Update displays
+        updateFullList(doctorKey, document.getElementById(`${doctorKey}FullList`));
+        updateYesterdayList(doctorKey, document.getElementById(`${doctorKey}YesterdayList`));
+        updatePatientList(doctorKey, document.getElementById(`${doctorKey}PatientList`));
+        updateHistoryDisplay(doctorKey, document.getElementById(`${doctorKey}History`));
+        
+        // Update statistics
+        updateStatistics();
+        setTimeout(() => loadFromDatabase(), 500);
+    });
     
     // Update current appointment display if it was deleted
     const appointmentElement = document.getElementById(`${doctorKey}Appointment`);
@@ -473,8 +478,15 @@ async function loadFromDatabase() {
     }
 }
 
-// Save data to database
+// Save data to database with retry logic
+let saveInProgress = false;
 async function saveToDatabase() {
+    // Prevent concurrent saves
+    if (saveInProgress) {
+        return false;
+    }
+    
+    saveInProgress = true;
     try {
         const dataToSave = {
             appointments: appointmentHistory,
@@ -502,6 +514,31 @@ async function saveToDatabase() {
         if (!response.ok) {
             throw new Error('Failed to save to database');
         }
+        
+        // If server returns merged data, use it to update local state
+        const result = await response.json();
+        if (result.data) {
+            // Update local state with merged data from server
+            if (result.data.appointments) {
+                appointmentHistory.umar = result.data.appointments.umar || appointmentHistory.umar;
+                appointmentHistory.samreen = result.data.appointments.samreen || appointmentHistory.samreen;
+            }
+            if (result.data.lastAppointmentToday) {
+                lastAppointmentToday.umar = Math.max(lastAppointmentToday.umar, result.data.lastAppointmentToday.umar || 0);
+                lastAppointmentToday.samreen = Math.max(lastAppointmentToday.samreen, result.data.lastAppointmentToday.samreen || 0);
+            }
+            if (result.data.usedNumbersToday) {
+                if (result.data.usedNumbersToday.umar) {
+                    result.data.usedNumbersToday.umar.forEach(num => usedAppointmentNumbersToday.umar.add(num));
+                }
+                if (result.data.usedNumbersToday.samreen) {
+                    result.data.usedNumbersToday.samreen.forEach(num => usedAppointmentNumbersToday.samreen.add(num));
+                }
+            }
+            // Refresh displays after merge
+            refreshAllDisplays();
+        }
+        
         return true;
     } catch (e) {
         console.error('Error saving to database:', e);
@@ -509,6 +546,8 @@ async function saveToDatabase() {
         localStorage.setItem('appointmentHistory_umar', JSON.stringify(appointmentHistory.umar));
         localStorage.setItem('appointmentHistory_samreen', JSON.stringify(appointmentHistory.samreen));
         return false;
+    } finally {
+        saveInProgress = false;
     }
 }
 
@@ -678,6 +717,8 @@ function generateYesterdayAppointment(doctor) {
         updateYesterdayList(doctorKey, document.getElementById(`${doctorKey}YesterdayList`));
         updatePatientList(doctorKey, document.getElementById(`${doctorKey}PatientList`));
         updateHistoryDisplay(doctorKey, document.getElementById(`${doctorKey}History`));
+        // Immediately refresh from server to get merged data from other devices
+        setTimeout(() => loadFromDatabase(), 500);
     });
 }
 
@@ -1049,10 +1090,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Save initial data (don't await - just ensure it's saved)
     saveToLocalStorage().catch(err => console.error('Error saving initial data:', err));
     
-    // Auto-refresh data every 3 seconds to sync across devices
+    // Auto-refresh data every 2 seconds to sync across devices (more frequent for better sync)
+    let isRefreshing = false;
     setInterval(async () => {
-        await loadFromDatabase();
-    }, 3000);
+        if (!isRefreshing) {
+            isRefreshing = true;
+            try {
+                await loadFromDatabase();
+            } finally {
+                isRefreshing = false;
+            }
+        }
+    }, 2000);
     
     // Also refresh when window gains focus (user switches back to tab)
     window.addEventListener('focus', async () => {
